@@ -33,7 +33,7 @@
     <trigger
      group="Trigger_Group_Rearm"
      match="^\{invmon\}1,(?<objid>\d+),-1,(?<wearloc>-?\d+)\n.+? DISARMS you and you struggle not to drop your weapon!\Z"
-     enabled="y"
+     enabled="n"
      send_to="12"
      regexp="y"
      multi_line="y"
@@ -47,7 +47,7 @@
     <trigger
      group="Trigger_Group_Rearm"
      match="^\{invmon\}1,(?<objid>\d+),-1,(?<wearloc>-?\d+)\n.+? DISARMS you and sends your .+? flying!\n\{invmon\}3,\k<objid>,-1,-1\Z"
-     enabled="y"
+     enabled="n"
      send_to="12"
      regexp="y"
      multi_line="y"
@@ -62,7 +62,7 @@
     <trigger
      group="Trigger_Group_Rearm"
      match="^Pearza of the Dark Eight creates a terrifying illusion!\nYour weapon has turned to fire!  IT BURNS!\nScreaming in agony, you throw the weapon down!\n\{invmon\}1,(?<objid>\d+),-1,(?<wearloc>-?\d+)\Z"
-     enabled="y"
+     enabled="n"
      send_to="12"
      regexp="y"
      multi_line="y"
@@ -81,7 +81,7 @@
 <![CDATA[
 require "gmcphelper"
 
-
+state = -1
 
 WEARLOC = {
     ["0"] = "light", ["1"] = "head", ["2"] = "eyes",
@@ -106,14 +106,52 @@ function rearm(objid, wearloc, get)
     SendNoEcho("wear " .. objid .. wearloc)
 end
 
+function on_state_change(prev, curr)
+    if (curr == 8) then -- entered combat
+        print("Entered combat. enabling triggers")
+        EnableTriggerGroup("Trigger_Group_Rearm", true)
+    elseif (prev == 8) then -- left combat
+        print("Left combat. Disabling triggers")
+        EnableTriggerGroup("Trigger_Group_Rearm", false)
+    end
+end
+
 
 
 --------------------------------------------------
 -- Plugin Callbacks
 --------------------------------------------------
 
+function OnPluginInstall()
+end
+
+function OnPluginConnect()
+    Send_GMCP_Packet("request char")
+end
+
+function OnPluginEnable()
+    OnPluginInstall()
+    if (IsConnected()) then
+        OnPluginConnect()
+    end
+end
+
+function OnPluginClose()
+end
+
+function OnPluginDisable()
+    OnPluginClose()
+end
+
 function OnPluginBroadcast(msg, id, name, text)
     if (id == "3e7dedbe37e44942dd46d264") then -- GMCP handler
+        if (text == "char.status") then
+            local prev = state
+            state = tonumber(gmcp("char.status.state"))
+            if (prev ~= state) then
+                on_state_change(prev, state)
+            end
+        end
     end
 end -- OnPluginBroadcast
 ]]>
