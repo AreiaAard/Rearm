@@ -30,6 +30,34 @@
 
 
 <triggers>
+    <trigger
+     group="Trigger_Group_Rearm"
+     match="^\{invmon\}1,(?<objid>\d+),-1,(?<wearloc>-?\d+)\n.+? DISARMS you and you struggle not to drop your weapon!\Z"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     multi_line="y"
+     lines_to_match="2"
+     sequence="100"
+    >
+    <send>
+        rearm("%&lt;objid&gt;", "%&lt;wearloc&gt;", false)
+    </send>
+    </trigger>
+    <trigger
+     group="Trigger_Group_Rearm"
+     match="^\{invmon\}1,(?<objid>\d+),-1,(?<wearloc>-?\d+)\n.+? DISARMS you and sends your .+? flying!\n\{invmon\}3,\k<objid>,-1,-1\Z"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     multi_line="y"
+     lines_to_match="3"
+     sequence="100"
+    >
+    <send>
+        rearm("%&lt;objid&gt;", "%&lt;wearloc&gt;", true)
+    </send>
+    </trigger>
 </triggers>
 
 
@@ -37,6 +65,37 @@
 <script>
 <![CDATA[
 require "gmcphelper"
+
+
+
+WEARLOC = {
+    ["0"] = "light", ["1"] = "head", ["2"] = "eyes",
+    ["3"] = "lear", ["4"] = "rear", ["5"] = "neck1",
+    ["6"] = "neck2", ["7"] = "back", ["8"] = "medal1",
+    ["9"] = "medal2", ["10"] = "medal3", ["11"] = "medal4",
+    ["12"] = "torso", ["13"] = "body", ["14"] = "waist",
+    ["15"] = "arms", ["16"] = "lwrist", ["17"] = "rwrist",
+    ["18"] = "hands", ["19"] = "lfinger", ["20"] = "rfinger",
+    ["21"] = "legs", ["22"] = "feet", ["23"] = "shield",
+    ["24"] = "wielded", ["25"] = "second", ["26"] = "hold",
+    ["27"] = "float", ["30"] = "above", ["31"] = "portal",
+    ["32"] = "sleeping"
+}
+
+function rearm(objid, wearloc, get)
+    if (get) then
+        SendNoEcho("get " .. objid)
+    end
+    -- Convert wearloc value to a string to be used in the command
+    wearloc = WEARLOC[wearloc] and " " .. WEARLOC[wearloc] or ""
+    SendNoEcho("wear " .. objid .. wearloc)
+end
+
+
+
+--------------------------------------------------
+-- Plugin Callbacks
+--------------------------------------------------
 
 function OnPluginBroadcast(msg, id, name, text)
     if (id == "3e7dedbe37e44942dd46d264") then -- GMCP handler
