@@ -11,7 +11,7 @@
    save_state="n"
    date_written="2020-12-15 04:00:00"
    requires="5.07"
-   version="1.00"
+   version="1.10"
    >
 <description trim="y">
 <![CDATA[
@@ -25,6 +25,15 @@
 
 
 <aliases>
+    <alias
+     match="^rearm\s+update$"
+     enabled="y"
+     script="update_plugin"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
 </aliases>
 
 
@@ -147,6 +156,7 @@ end
 
 function raw_get(retval, page, status, headers, full_status, request_url)
     local PLUGIN_NAME = GetPluginInfo(GetPluginID(), 1)
+    local PLUGIN_VERSION = GetPluginInfo(GetPluginID(), 19)
     if status == 200 then
         raw_version = tonumber(string.match(page, '%s%s+version="([0-9%.]+)"'))
     end
