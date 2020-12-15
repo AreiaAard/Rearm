@@ -73,6 +73,17 @@
         rearm("%&lt;objid&gt;", "%&lt;wearloc&gt;", false)
     </send>
     </trigger>
+    
+    <trigger
+     group="invmon"
+     match="^\{invmon\}.+$"
+     enabled="y"
+     regexp="y"
+     omit_from_output="y"
+     keep_evaluating="y"
+     sequence="99"
+    >
+    </trigger>
 </triggers>
 
 
@@ -108,12 +119,19 @@ end
 
 function on_state_change(prev, curr)
     if (curr == 8) then -- entered combat
-        print("Entered combat. enabling triggers")
         EnableTriggerGroup("Trigger_Group_Rearm", true)
+        -- We have to manually send this to update config data clientside.
+        -- OnPluginBroadcast handles the response. Note: maybe we should just
+        -- trigger on invmon enable/disable messages and call it a day?
+        Send_GMCP_Packet("config invmon")
     elseif (prev == 8) then -- left combat
-        print("Left combat. Disabling triggers")
         EnableTriggerGroup("Trigger_Group_Rearm", false)
     end
+end
+
+function invmon_disabled()
+    ColourNote("red", "black", "WARNING: ", "silver", "", "Invmon is required for your rearming plugin to work!")
+    ColourNote("silver", "black", "Submit ", "yellow", "", "invmon", "silver", "", " to enable it.")
 end
 
 
@@ -122,25 +140,29 @@ end
 -- Plugin Callbacks
 --------------------------------------------------
 
-function OnPluginInstall()
+function OnPluginEnable()
 end
 
 function OnPluginConnect()
+    -- Make sure char info is updated ASAP.
     Send_GMCP_Packet("request char")
+    -- We have to manually send this to update the config data clientside.
+    -- OnPluginBroadcast catches the response.
+    Send_GMCP_Packet("config invmon")
 end
 
-function OnPluginEnable()
-    OnPluginInstall()
+function OnPluginInstall()
+    OnPluginEnable()
     if (IsConnected()) then
         OnPluginConnect()
     end
 end
 
-function OnPluginClose()
+function OnPluginDisable()
 end
 
-function OnPluginDisable()
-    OnPluginClose()
+function OnPluginClose()
+    OnPluginDisable()
 end
 
 function OnPluginBroadcast(msg, id, name, text)
@@ -150,6 +172,10 @@ function OnPluginBroadcast(msg, id, name, text)
             state = tonumber(gmcp("char.status.state"))
             if (prev ~= state) then
                 on_state_change(prev, state)
+            end
+        elseif (text == "config.invmon") then
+            if (gmcp("config.invmon") == "NO") then
+                invmon_disabled()
             end
         end
     end
