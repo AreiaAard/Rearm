@@ -58,6 +58,21 @@
         rearm("%&lt;objid&gt;", "%&lt;wearloc&gt;", true)
     </send>
     </trigger>
+    
+    <trigger
+     group="Trigger_Group_Rearm"
+     match="^Pearza of the Dark Eight creates a terrifying illusion!\nYour weapon has turned to fire!  IT BURNS!\nScreaming in agony, you throw the weapon down!\n\{invmon\}1,(?<objid>\d+),-1,(?<wearloc>-?\d+)\Z"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     multi_line="y"
+     lines_to_match="4"
+     sequence="100"
+    >
+    <send>
+        rearm("%&lt;objid&gt;", "%&lt;wearloc&gt;", false)
+    </send>
+    </trigger>
 </triggers>
 
 
